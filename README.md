@@ -25,6 +25,21 @@ LoRA weights grouped by the base model they were trained for:
 | `loras/z-image/` | Z-Image |
 | `loras/LTX2.3/` | LTX-Video 2.3 |
 
+#### Externally-stored weights (not in git)
+
+These LoRA weights exceed GitHub's 100 MB file-size limit and are **not tracked
+in this repository**. They live on local/external storage only — keep your own
+backup:
+
+| File | Size |
+| --- | --- |
+| `loras/LTX2.3/tambam_ltx_eros.comfy.safetensors` | 768 MB |
+| `loras/SDXL/tammy_sdxl_juggernaut.safetensors` | 650 MB |
+| `loras/z-image/tambam_zimage-comfy.safetensors` | 267 MB |
+| `loras/Flux2-Klein/tambam_klein.safetensors` | 158 MB |
+| `loras/Flux1-dev/tambam-flux.safetensors` | 151 MB |
+| `loras/Wan22/tambam_wan22.safetensors` | 146 MB |
+
 ## lora_utilities
 
 Utilities for working with LoRA files and AI-generated image metadata.
