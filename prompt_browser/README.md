@@ -19,38 +19,36 @@ reproducible.
 
 ## Prerequisites
 
-- **PostgreSQL** running. Native install, or quick container:
-  ```bash
-  docker run -d --name prompts-pg -p 5432:5432 \
-    -e POSTGRES_USER=prompts -e POSTGRES_PASSWORD=prompts -e POSTGRES_DB=prompts \
-    postgres:16
+- **PostgreSQL** running. Native Windows install, or quick container (one line):
+  ```powershell
+  docker run -d --name prompts-pg -p 5432:5432 -e POSTGRES_USER=prompts -e POSTGRES_PASSWORD=prompts -e POSTGRES_DB=prompts postgres:16
   ```
 - **ComfyUI** running with its API (default `http://127.0.0.1:8188`).
 - The **`render` conda environment** (this project's env):
-  ```bash
+  ```powershell
   conda activate render
   pip install -r requirements.txt
   ```
 
-## Setup
+## Setup (Windows 11 / PowerShell)
 
-> All commands below assume `conda activate render` is active.
+> Run from the `prompt_browser` folder with `conda activate render` active.
 
-1. Copy config and edit:
-   ```bash
-   cp .env.example .env       # set DATABASE_URL and COMFYUI_URL
+1. Copy config, then edit `.env`:
+   ```powershell
+   Copy-Item .env.example .env       # then set DATABASE_URL and COMFYUI_URL
+   notepad .env
    ```
 2. Extract metadata **with workflow graphs** (note `--jsonl`):
-   ```bash
-   python ../lora_utilities/extract_render_metadata.py \
-       -i "E:/DATA/renders" -o renders.csv --jsonl renders.jsonl --no-dedup
+   ```powershell
+   python ../lora_utilities/extract_render_metadata.py -i "E:/DATA/renders" -o renders.csv --jsonl renders.jsonl --no-dedup
    ```
 3. Load into PostgreSQL (creates the schema on first run, upserts on re-runs):
-   ```bash
+   ```powershell
    python build_db.py renders.jsonl
    ```
 4. Launch the UI:
-   ```bash
+   ```powershell
    streamlit run app.py
    ```
 

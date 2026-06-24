@@ -1,5 +1,5 @@
 -- prompt_browser schema (PostgreSQL)
--- Run automatically by build_db.py, or manually: psql "$DATABASE_URL" -f schema.sql
+-- Run automatically by build_db.py, or manually (PowerShell): psql $env:DATABASE_URL -f schema.sql
 
 CREATE EXTENSION IF NOT EXISTS pg_trgm;   -- fast ILIKE '%term%' prompt search
 
