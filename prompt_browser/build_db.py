@@ -1,9 +1,8 @@
 """
 build_db.py -- load the extractor's JSONL into PostgreSQL.
 
-1. Generate the JSONL with the workflow graphs:
-     python ../lora_utilities/extract_render_metadata.py \
-         -i "E:/DATA/renders" -o renders.csv --jsonl renders.jsonl --no-dedup
+1. Generate the JSONL with the workflow graphs (PowerShell, one line):
+     python ../lora_utilities/extract_render_metadata.py -i "E:/DATA/renders" -o renders.csv --jsonl renders.jsonl --no-dedup
 2. Load it:
      python build_db.py renders.jsonl
 
