@@ -638,6 +638,9 @@ def process_file(path, root):
     row["lora_count"] = len(loras)
     row["image_type"] = classify_image_type(pos, row["loras"])
     row.update(extract_dims_and_sampling(graph))
+    # Keep the raw ComfyUI graph for downstream replay (DB import / regeneration).
+    # Not a CSV column -- the underscore key is ignored by the CSV writers.
+    row["_graph"] = graph
     return row, True
 
 
@@ -656,6 +659,10 @@ def main():
                     help="Output CSV path (default: render_metadata.csv)")
     ap.add_argument("--limit", type=int, default=0,
                     help="Process at most N files (0 = all). Useful for testing.")
+    ap.add_argument("--jsonl", default=None,
+                    help="Also write a JSON Lines file: one record per PNG with all "
+                         "fields PLUS the raw ComfyUI workflow graph under 'workflow'. "
+                         "This is the import source for the prompt_browser database.")
     ap.add_argument("--no-dedup", action="store_true",
                     help="Skip writing the deduplicated *_unique.csv.")
     ap.add_argument("--dedup-only", action="store_true",
@@ -711,26 +718,37 @@ def main():
         return
 
     total = with_meta = without = 0
-    collected = []  # kept for the dedup phase
-    with open(args.output, "w", newline="", encoding="utf-8-sig") as fh:
-        writer = csv.DictWriter(fh, fieldnames=FIELDS)
-        writer.writeheader()
-        for path in iter_pngs(args.input):
-            row, ok = process_file(path, args.input)
-            writer.writerow(row)
-            if not args.no_dedup:
-                collected.append(row)
-            total += 1
-            with_meta += 1 if ok else 0
-            without += 0 if ok else 1
-            if total % 500 == 0:
-                print("  processed %d files (%d with metadata)..." % (total, with_meta))
-            if args.limit and total >= args.limit:
-                break
+    collected = []  # kept for the dedup phase (graph stripped to bound memory)
+    jsonl_fh = open(args.jsonl, "w", encoding="utf-8") if args.jsonl else None
+    try:
+        with open(args.output, "w", newline="", encoding="utf-8-sig") as fh:
+            writer = csv.DictWriter(fh, fieldnames=FIELDS, extrasaction="ignore")
+            writer.writeheader()
+            for path in iter_pngs(args.input):
+                row, ok = process_file(path, args.input)
+                writer.writerow(row)  # extrasaction="ignore" drops _graph
+                if jsonl_fh is not None:
+                    record = {f: row.get(f, "") for f in FIELDS}
+                    record["workflow"] = row.get("_graph")
+                    jsonl_fh.write(json.dumps(record, ensure_ascii=False) + "\n")
+                if not args.no_dedup:
+                    collected.append({f: row.get(f, "") for f in FIELDS})  # no graph
+                total += 1
+                with_meta += 1 if ok else 0
+                without += 0 if ok else 1
+                if total % 500 == 0:
+                    print("  processed %d files (%d with metadata)..." % (total, with_meta))
+                if args.limit and total >= args.limit:
+                    break
+    finally:
+        if jsonl_fh is not None:
+            jsonl_fh.close()
 
     print("\nDone. %d PNGs scanned -> %s" % (total, args.output))
     print("  with generation metadata: %d" % with_meta)
     print("  without metadata:         %d" % without)
+    if args.jsonl:
+        print("  workflow graphs -> %s" % args.jsonl)
 
     if not args.no_dedup:
         n_unique, collapsed = write_unique_csv(collected, uniq_out)

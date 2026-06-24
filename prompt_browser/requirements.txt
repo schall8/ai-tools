@@ -1,0 +1,5 @@
+streamlit>=1.30
+psycopg2-binary>=2.9
+requests>=2.31
+websocket-client>=1.7
+python-dotenv>=1.0

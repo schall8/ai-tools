@@ -7,6 +7,7 @@ Python scripts I am building to help with my ai addiction
 | --- | --- |
 | `loras/` | Trained LoRA `.safetensors` weights, organized into a subfolder per base model. |
 | `lora_utilities/` | Python utilities for inspecting LoRAs and extracting metadata from generated images (see below), plus the exported CSVs. |
+| `prompt_browser/` | PostgreSQL-backed app to browse extracted prompts and re-submit them to the ComfyUI API to generate. See `prompt_browser/README.md`. |
 | `OneTrainer/trainer_presets/` | [OneTrainer](https://github.com/Nerogar/OneTrainer) LoRA training config presets (`.json`). |
 | `fluxgym_mods/` | Modifications for [fluxgym](https://github.com/cocktailpeanut/fluxgym) (e.g. `models.yaml`). |
 | `renders/` | Sample ComfyUI-generated PNGs (with embedded generation metadata). |
