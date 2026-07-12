@@ -12,6 +12,7 @@ batches (e.g. the next 100k images) without duplicating.
 import os
 import sys
 import json
+import math
 import argparse
 
 import psycopg2
@@ -56,6 +57,16 @@ def parse_loras(loras_str):
             name, strength = chunk, ""
         out.append((name.strip(), _real(strength)))
     return out
+
+
+def _sanitize_json(obj):
+    if isinstance(obj, float) and (math.isnan(obj) or math.isinf(obj)):
+        return None
+    if isinstance(obj, dict):
+        return {k: _sanitize_json(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_sanitize_json(v) for v in obj]
+    return obj
 
 
 def ensure_schema(cur):
@@ -141,7 +152,7 @@ def main():
                 "seed": _seed(rec.get("seed")),
                 "denoise": _real(rec.get("denoise")),
                 "lora_count": _int(rec.get("lora_count")),
-                "workflow": json.dumps(rec.get("workflow")),
+                "workflow": json.dumps(_sanitize_json(rec.get("workflow"))),
             }
             cur.execute(UPSERT_GEN, params)
             gen_id = cur.fetchone()[0]
