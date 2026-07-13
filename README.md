@@ -5,45 +5,19 @@ Python scripts I am building to help with my ai addiction
 
 | Folder | Contents |
 | --- | --- |
-| `loras/` | Trained LoRA `.safetensors` weights, organized into a subfolder per base model. |
-| `lora_utilities/` | Python utilities for inspecting LoRAs and extracting metadata from generated images (see below), plus the exported CSVs. |
+| `train_scripts/` | Parameter-driven LoRA cache/train drivers for musubi-tuner (krea2, Klein, Z-Image, WAN 2.2, LTX-2.3). One generic driver per architecture — pass everything as flags. See `train_scripts/README.md`. |
+| `lora_utilities/` | Python utilities for inspecting LoRAs, captioning datasets, and extracting metadata from generated images (see below). |
 | `prompt_browser/` | PostgreSQL-backed app to browse extracted prompts and re-submit them to the ComfyUI API to generate. See `prompt_browser/README.md`. |
-| `OneTrainer/trainer_presets/` | [OneTrainer](https://github.com/Nerogar/OneTrainer) LoRA training config presets (`.json`). |
-| `fluxgym_mods/` | Modifications for [fluxgym](https://github.com/cocktailpeanut/fluxgym) (e.g. `models.yaml`). |
-| `renders/` | Sample ComfyUI-generated PNGs (with embedded generation metadata). |
 
-### loras/
-
-LoRA weights grouped by the base model they were trained for:
-
-| Subfolder | Base model |
-| --- | --- |
-| `loras/Flux1-dev/` | FLUX.1-dev |
-| `loras/Flux2-Klein/` | FLUX.2 Klein |
-| `loras/Chroma/` | Chroma |
-| `loras/SDXL/` | SDXL |
-| `loras/Wan22/` | Wan 2.2 |
-| `loras/z-image/` | Z-Image |
-| `loras/LTX2.3/` | LTX-Video 2.3 |
-
-#### Externally-stored weights (not in git)
-
-These LoRA weights exceed GitHub's 100 MB file-size limit and are **not tracked
-in this repository**. They live on local/external storage only — keep your own
-backup:
-
-| File | Size |
-| --- | --- |
-| `loras/LTX2.3/tambam_ltx_eros.comfy.safetensors` | 768 MB |
-| `loras/SDXL/tammy_sdxl_juggernaut.safetensors` | 650 MB |
-| `loras/z-image/tambam_zimage-comfy.safetensors` | 267 MB |
-| `loras/Flux2-Klein/tambam_klein.safetensors` | 158 MB |
-| `loras/Flux1-dev/tambam-flux.safetensors` | 151 MB |
-| `loras/Wan22/tambam_wan22.safetensors` | 146 MB |
+Trained LoRA `.safetensors` weights and sample renders are no longer tracked in
+this repository (they live on local/external storage only). This repo now holds
+the **tooling** — training drivers, dataset/caption utilities, and the prompt
+browser.
 
 ## lora_utilities
 
-Utilities for working with LoRA files and AI-generated image metadata.
+Utilities for working with LoRA files, LoRA training datasets, and AI-generated
+image metadata.
 
 ### extract_render_metadata.py
 
@@ -108,6 +82,21 @@ rescan the PNGs — just recompute from the existing CSV:
 ```bash
 python extract_render_metadata.py -o render_metadata.csv --reclassify
 ```
+
+### joycaption_dir.py
+
+Batch-captions every image in a directory with **JoyCaption Beta One** and
+writes a `.txt` sidecar next to each image (`ImageName.png` → `ImageName.txt`),
+with a trigger word prepended — ready for LoRA training. Prompt presets:
+`descriptive`, `short`, `training`, `tags`.
+
+```bash
+python joycaption_dir.py ./dataset underbust_corset
+python joycaption_dir.py ./dataset underbust_corset --style short --overwrite
+```
+
+Requires `torch`, `transformers`, `accelerate`, and `pillow`. The model (~17 GB)
+auto-downloads from HuggingFace on first run.
 
 ### get_lora_info.py
 
