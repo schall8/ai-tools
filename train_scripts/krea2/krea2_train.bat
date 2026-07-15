@@ -19,6 +19,10 @@ REM  Sampling toggle (NEW):
 REM    --samples on|off      (default: on)
 REM    --sample-prompts <file>   (required when --samples on)
 REM    --sample-every 2
+REM
+REM  Trigger word (NEW):
+REM    --trigger <word>      stamp into output LoRA metadata after training
+REM                          (comma-separated for multiple, e.g. "c0urtney, corset")
 REM =====================================================================
 
 REM ---- fixed paths / defaults ----
@@ -42,6 +46,8 @@ set "GRAD_ACCUM=4"
 set "SAMPLES=on"
 set "SAMPLE_PROMPTS="
 set "SAMPLE_EVERY=2"
+set "RESUME="
+set "TRIGGER="
 set "DRYRUN=0"
 
 REM ---- parse args ----
@@ -61,6 +67,8 @@ if /i "%~1"=="--grad-accum"     ( set "GRAD_ACCUM=%~2" & shift & shift & goto pa
 if /i "%~1"=="--samples"        ( set "SAMPLES=%~2" & shift & shift & goto parse )
 if /i "%~1"=="--sample-prompts" ( set "SAMPLE_PROMPTS=%~2" & shift & shift & goto parse )
 if /i "%~1"=="--sample-every"   ( set "SAMPLE_EVERY=%~2" & shift & shift & goto parse )
+if /i "%~1"=="--resume"         ( set "RESUME=%~2" & shift & shift & goto parse )
+if /i "%~1"=="--trigger"        ( set "TRIGGER=%~2" & shift & shift & goto parse )
 if /i "%~1"=="--dry-run"        ( set "DRYRUN=1" & shift & goto parse )
 echo ERROR: unknown argument: %~1
 exit /b 1
@@ -88,12 +96,23 @@ if /i "%SAMPLES%"=="on" (
     set "SAMPLE_MSG=off"
 )
 
+REM ---- resume toggle ----
+if not "%RESUME%"=="" (
+    if not exist "%RESUME%" ( echo ERROR: resume state not found: %RESUME% & exit /b 1 )
+    set "RESUME_ARG=--resume "%RESUME%""
+    set "RESUME_MSG=%RESUME%"
+) else (
+    set "RESUME_ARG="
+    set "RESUME_MSG=fresh (no resume)"
+)
+
 echo.
 echo Krea2 RAW LoRA training - %NAME%
 echo   Config:   %TOML%
 echo   Output:   %OUTPUT_DIR%\%OUTPUT_NAME%
 echo   Epochs:   %EPOCHS%   dim/alpha: %DIM%/%ALPHA%   lr: %LR%   blocks_to_swap: %BLOCKS%
 echo   Sampling: !SAMPLE_MSG!
+echo   Resume:   !RESUME_MSG!
 echo   NOTE: blocks_to_swap=%BLOCKS% for 16GB. Increase if OOM.
 
 if "%DRYRUN%"=="1" (
@@ -109,6 +128,8 @@ set HF_HOME=D:\hf-cache
 set PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True,max_split_size_mb:1024
 set TORCH_ALLOW_TF32_CUBLAS_OVERRIDE=1
 set CUDA_MODULE_LOADING=LAZY
+
+if not "!TRIGGER!"=="" ( set "COMMENT_ARG=--training_comment "!TRIGGER!"" ) else ( set "COMMENT_ARG=" )
 
 accelerate launch ^
   --num_cpu_threads_per_process 8 ^
@@ -138,15 +159,24 @@ accelerate launch ^
   --save_state ^
   --text_encoder "%TEXT_ENCODER%" ^
   !SAMPLE_ARGS! ^
+  !RESUME_ARG! ^
+  !COMMENT_ARG! ^
   --output_dir "%OUTPUT_DIR%" ^
   --output_name "%OUTPUT_NAME%" ^
   --max_data_loader_n_workers 2 ^
   --persistent_data_loader_workers ^
   --seed 42
 
-if %ERRORLEVEL% NEQ 0 (
+set "TRAINRC=%ERRORLEVEL%"
+if not "%TRAINRC%"=="0" (
     echo.
-    echo Training failed with error code %ERRORLEVEL%
+    echo Training failed with error code %TRAINRC%
+) else (
+    if not "!TRIGGER!"=="" (
+        echo.
+        echo Stamping trigger word "!TRIGGER!" into output LoRAs...
+        python "%~dp0..\write_trigger.py" --dir "%OUTPUT_DIR%" --trigger "!TRIGGER!"
+    )
 )
 
 pause

@@ -24,6 +24,10 @@ REM  Sampling toggle:
 REM    --samples on|off      (default: on)
 REM    --sample-prompts <file>   (required when --samples on)
 REM    --sample-every 1
+REM
+REM  Trigger word:
+REM    --trigger <word>      stamp into output LoRA metadata after training
+REM                          (comma-separated for multiple, e.g. "tammy, corset")
 REM =====================================================================
 
 REM ---- fixed paths / defaults ----
@@ -44,6 +48,7 @@ set "SAVE_EVERY=1"
 set "SAMPLES=on"
 set "SAMPLE_PROMPTS="
 set "SAMPLE_EVERY=1"
+set "TRIGGER="
 set "DRYRUN=0"
 
 REM ---- parse args ----
@@ -63,6 +68,7 @@ if /i "%~1"=="--text-encoder"   ( set "TE=%~2" & shift & shift & goto parse )
 if /i "%~1"=="--samples"        ( set "SAMPLES=%~2" & shift & shift & goto parse )
 if /i "%~1"=="--sample-prompts" ( set "SAMPLE_PROMPTS=%~2" & shift & shift & goto parse )
 if /i "%~1"=="--sample-every"   ( set "SAMPLE_EVERY=%~2" & shift & shift & goto parse )
+if /i "%~1"=="--trigger"        ( set "TRIGGER=%~2" & shift & shift & goto parse )
 if /i "%~1"=="--dry-run"        ( set "DRYRUN=1" & shift & goto parse )
 echo ERROR: unknown argument: %~1
 exit /b 1
@@ -136,6 +142,8 @@ set CUDA_VISIBLE_DEVICES=0
 set PYTORCH_ALLOC_CONF=expandable_segments:True
 set PYTHONIOENCODING=utf-8
 
+if not "!TRIGGER!"=="" ( set "COMMENT_ARG=--training_comment "!TRIGGER!"" ) else ( set "COMMENT_ARG=" )
+
 accelerate launch --num_cpu_threads_per_process 1 --mixed_precision bf16 zimage_train_network.py ^
   --dit "%DIT%" ^
   --vae "%VAE%" ^
@@ -164,10 +172,17 @@ accelerate launch --num_cpu_threads_per_process 1 --mixed_precision bf16 zimage_
   --seed 42 ^
   !RESUMEARG! ^
   !SAMPLE_ARGS! ^
+  !COMMENT_ARG! ^
   --output_dir "%OUT%" ^
   --output_name "%OUTNAME%"
 
 if %ERRORLEVEL% NEQ 0 ( echo. & echo Training failed with error code %errorlevel% & pause & exit /b 1 )
+
+if not "!TRIGGER!"=="" (
+    echo.
+    echo Stamping trigger word "!TRIGGER!" into output LoRAs...
+    python "%~dp0..\write_trigger.py" --dir "%OUT%" --trigger "!TRIGGER!"
+)
 
 echo.
 echo Done. LoRA: %OUT%\%OUTNAME%.safetensors

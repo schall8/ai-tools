@@ -18,6 +18,7 @@ REM    --save-every 2   --save-last 30   --grad-accum 4   --warmup-steps 100
 REM    --target-preset t2v
 REM    --output-name <name>_ltx   --output-root D:\DATA\training\ltx_loras
 REM    --meta-title / --meta-author / --meta-desc / --meta-tags
+REM    --trigger <word>      stamp into output LoRA metadata (comma-sep for many)
 REM =====================================================================
 
 REM ---- fixed paths / defaults ----
@@ -43,6 +44,7 @@ set "META_TITLE="
 set "META_AUTHOR=AI Guy"
 set "META_DESC="
 set "META_TAGS="
+set "TRIGGER="
 set "DRYRUN=0"
 
 REM ---- parse args ----
@@ -67,6 +69,7 @@ if /i "%~1"=="--meta-title"     ( set "META_TITLE=%~2" & shift & shift & goto pa
 if /i "%~1"=="--meta-author"    ( set "META_AUTHOR=%~2" & shift & shift & goto parse )
 if /i "%~1"=="--meta-desc"      ( set "META_DESC=%~2" & shift & shift & goto parse )
 if /i "%~1"=="--meta-tags"      ( set "META_TAGS=%~2" & shift & shift & goto parse )
+if /i "%~1"=="--trigger"        ( set "TRIGGER=%~2" & shift & shift & goto parse )
 if /i "%~1"=="--dry-run"        ( set "DRYRUN=1" & shift & goto parse )
 echo ERROR: unknown argument: %~1
 exit /b 1
@@ -106,6 +109,8 @@ set PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 set TORCH_ALLOW_TF32_CUBLAS_OVERRIDE=1
 set CUDA_MODULE_LOADING=LAZY
 
+if not "!TRIGGER!"=="" ( set "COMMENT_ARG=--training_comment "!TRIGGER!"" ) else ( set "COMMENT_ARG=" )
+
 accelerate launch ^
   --num_cpu_threads_per_process 1 ^
   --mixed_precision bf16 ^
@@ -142,6 +147,7 @@ accelerate launch ^
   --output_name "%OUTPUT_NAME%" ^
   --caption_dropout_rate 0.05 ^
   --seed 42 ^
+  !COMMENT_ARG! ^
   --metadata_title "%META_TITLE%" ^
   --metadata_author "%META_AUTHOR%" ^
   --metadata_description "%META_DESC%" ^
@@ -150,9 +156,16 @@ accelerate launch ^
   --autoresume ^
   --logging_dir "%OUTPUT_DIR%\logs"
 
-if %ERRORLEVEL% NEQ 0 (
+set "TRAINRC=%ERRORLEVEL%"
+if not "%TRAINRC%"=="0" (
     echo.
-    echo Training failed with error code %ERRORLEVEL%
+    echo Training failed with error code %TRAINRC%
+) else (
+    if not "!TRIGGER!"=="" (
+        echo.
+        echo Stamping trigger word "!TRIGGER!" into output LoRAs...
+        python "%~dp0..\write_trigger.py" --dir "%OUTPUT_DIR%" --trigger "!TRIGGER!"
+    )
 )
 
 pause

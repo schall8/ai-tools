@@ -17,6 +17,7 @@ REM  Common options (defaults match the tammy template):
 REM    --epochs 16   --dim 16   --alpha 16   --lr 1e-4   --blocks-to-swap 30
 REM    --grad-accum 2   --warmup-steps 150   --save-every 1   --task t2v-A14B
 REM    --output-name <name>_wan22   --output-root D:\DATA\training\wan_loras
+REM    --trigger <word>      stamp into output LoRA metadata (comma-sep for many)
 REM =====================================================================
 
 REM ---- fixed paths / defaults ----
@@ -40,6 +41,7 @@ set "GRAD_ACCUM=2"
 set "WARMUP=150"
 set "SAVE_EVERY=1"
 set "TASK=t2v-A14B"
+set "TRIGGER="
 set "DRYRUN=0"
 
 REM ---- parse args ----
@@ -62,6 +64,7 @@ if /i "%~1"=="--dit-high"       ( set "DIT_HIGH=%~2" & shift & shift & goto pars
 if /i "%~1"=="--vae"            ( set "VAE=%~2" & shift & shift & goto parse )
 if /i "%~1"=="--t5"             ( set "T5=%~2" & shift & shift & goto parse )
 if /i "%~1"=="--logdir"         ( set "LOGDIR=%~2" & shift & shift & goto parse )
+if /i "%~1"=="--trigger"        ( set "TRIGGER=%~2" & shift & shift & goto parse )
 if /i "%~1"=="--dry-run"        ( set "DRYRUN=1" & shift & goto parse )
 echo ERROR: unknown argument: %~1
 exit /b 1
@@ -98,6 +101,8 @@ cd /d "%MUSUBI_DIR%"
 set CUDA_VISIBLE_DEVICES=0
 set PYTORCH_ALLOC_CONF=expandable_segments:True
 
+if not "!TRIGGER!"=="" ( set "COMMENT_ARG=--training_comment "!TRIGGER!"" ) else ( set "COMMENT_ARG=" )
+
 accelerate launch --num_processes 1 --num_cpu_threads_per_process 1 "wan_train_network.py" ^
   --cuda_allow_tf32 ^
   --dataset_config "%TOML%" ^
@@ -123,6 +128,7 @@ accelerate launch --num_processes 1 --num_cpu_threads_per_process 1 "wan_train_n
   --optimizer_type AdamW ^
   --output_dir "%OUTPUT_DIR%" ^
   --output_name "%OUTPUT_NAME%" ^
+  !COMMENT_ARG! ^
   --persistent_data_loader_workers ^
   --save_every_n_epochs %SAVE_EVERY% ^
   --save_state ^
@@ -135,9 +141,16 @@ accelerate launch --num_processes 1 --num_cpu_threads_per_process 1 "wan_train_n
   --vae_dtype float16 ^
   --sdpa
 
-if %ERRORLEVEL% NEQ 0 (
+set "TRAINRC=%ERRORLEVEL%"
+if not "%TRAINRC%"=="0" (
     echo.
-    echo Training failed with error code %errorlevel%
+    echo Training failed with error code %TRAINRC%
+) else (
+    if not "!TRIGGER!"=="" (
+        echo.
+        echo Stamping trigger word "!TRIGGER!" into output LoRAs...
+        python "%~dp0..\write_trigger.py" --dir "%OUTPUT_DIR%" --trigger "!TRIGGER!"
+    )
 )
 
 pause

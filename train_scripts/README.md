@@ -117,6 +117,40 @@ blocks_to_swap `14`, epochs `24`, preset `t2v`.
 - `--samples off` — disables sampling entirely.
 - `--sample-every N` — epochs between samples (default 2).
 
+## Trigger words (all architectures)
+
+Pass `--trigger <word>` to any `*_train.bat`. This does two things:
+
+1. **Native:** passes `--training_comment "<word>"` to the trainer, so every
+   checkpoint gets `ss_training_comment` written *during* training (survives even
+   if the post-step is skipped).
+2. **Post-step:** after a successful run, `write_trigger.py` stamps the output
+   dir with the fields ComfyUI trigger tools actually read — `ss_tag_frequency`
+   (rgthree Power Lora Loader's *Show Info* keys off this; musubi-tuner does
+   **not** write it — there's a `# TODO support tag frequency` in its trainer),
+   plus `modelspec.trigger_phrase` and `ss_training_comment`.
+
+Existing training tags are preserved; the trigger is given a dominating count so
+it sorts first. Every saved epoch checkpoint in the output dir gets stamped. No
+retrain needed for either part.
+
+```bat
+krea2\krea2_train.bat --name courtney --trigger c0urtney ...
+```
+
+Comma-separate for multiple words: `--trigger "c0urtney, corset"`.
+
+To stamp a LoRA that's **already trained**, run the shared tool directly (from
+the `musubi` conda env, which has `safetensors`):
+
+```bat
+python train_scripts\write_trigger.py --file "D:\...\courtney_krea2.safetensors" --trigger c0urtney
+python train_scripts\write_trigger.py --dir  "D:\...\courtney_krea2"             --trigger c0urtney
+```
+
+After stamping, refresh the LoRA in ComfyUI (or restart) so the frontend
+re-reads the header.
+
 ## Overriding defaults
 
 Every tunable is a flag: `--epochs`, `--dim`, `--alpha`, `--lr`,
