@@ -13,13 +13,17 @@ REM
 REM  Run this ONCE per subject before klein_train.bat.
 REM =====================================================================
 
+REM ---- load machine paths from config.bat (run setup.bat to create it) ----
+set "CONFIG=%~dp0..\config.bat"
+if not exist "%CONFIG%" ( echo ERROR: config not found: %CONFIG% & echo Run setup.bat in the train_scripts folder once to create it. & exit /b 1 )
+call "%CONFIG%"
+
 REM ---- fixed paths / defaults ----
-set "MUSUBI_DIR=D:\github\musubi-tuner"
 set "RENDER=%~dp0..\render_toml.py"
 set "GEN_DIR=%~dp0_generated"
-set "CACHE_ROOT=D:/github/musubi-tuner/cache"
-set "VAE=D:\ai\models\FLUX2\ae.safetensors"
-set "TEXT_ENCODER=D:\ai\models\FLUX2\text_encoder\model-00001-of-00004.safetensors"
+set "CACHE_ROOT=%MUSUBI_DIR:\=/%/cache"
+set "VAE=%FLUX2_DIR%\ae.safetensors"
+set "TEXT_ENCODER=%FLUX2_DIR%\text_encoder\model-00001-of-00004.safetensors"
 set "MODEL_VERSION=klein-base-9b"
 
 set "NAME="

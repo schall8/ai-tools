@@ -20,17 +20,21 @@ REM    --output-name <name>_wan22   --output-root D:\DATA\training\wan_loras
 REM    --trigger <word>      stamp into output LoRA metadata (comma-sep for many)
 REM =====================================================================
 
+REM ---- load machine paths from config.bat (run setup.bat to create it) ----
+set "CONFIG=%~dp0..\config.bat"
+if not exist "%CONFIG%" ( echo ERROR: config not found: %CONFIG% & echo Run setup.bat in the train_scripts folder once to create it. & exit /b 1 )
+call "%CONFIG%"
+
 REM ---- fixed paths / defaults ----
-set "MUSUBI_DIR=D:\github\musubi-tuner"
 set "GEN_DIR=%~dp0_generated"
-set "DIT_LOW=D:\comfyui\ComfyUI\models\diffusion_models\wan2.2_t2v_low_noise_14B_fp16.safetensors"
-set "DIT_HIGH=D:\comfyui\ComfyUI\models\diffusion_models\wan2.2_t2v_high_noise_14B_fp16.safetensors"
-set "VAE=D:\comfyui\ComfyUI\models\vae\wan_2.1_vae.safetensors"
-set "T5=D:\comfyui\ComfyUI\models\clip\models_t5_umt5-xxl-enc-bf16.pth"
-set "LOGDIR=D:\github\musubi-tuner\logs"
+set "DIT_LOW=%COMFY_MODELS%\diffusion_models\wan2.2_t2v_low_noise_14B_fp16.safetensors"
+set "DIT_HIGH=%COMFY_MODELS%\diffusion_models\wan2.2_t2v_high_noise_14B_fp16.safetensors"
+set "VAE=%COMFY_MODELS%\vae\wan_2.1_vae.safetensors"
+set "T5=%COMFY_MODELS%\clip\models_t5_umt5-xxl-enc-bf16.pth"
+set "LOGDIR=%MUSUBI_DIR%\logs"
 
 set "NAME="
-set "OUTPUT_ROOT=D:\DATA\training\wan_loras"
+set "OUTPUT_ROOT=%TRAINING_ROOT%\wan_loras"
 set "OUTPUT_NAME="
 set "EPOCHS=16"
 set "DIM=16"

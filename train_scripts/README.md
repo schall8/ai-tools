@@ -6,6 +6,9 @@ generic driver per architecture and pass everything as command-line flags.
 
 ```
 train_scripts/
+  setup.bat                     # one-time: writes config.bat (asks for your paths)
+  config.example.bat            # template of the config.bat setup.bat generates
+  config.bat                    # YOUR machine paths (git-ignored; created by setup)
   render_toml.py                # shared stdlib TOML renderer (no deps)
   krea2/   krea2_cache.bat  krea2_train.bat
   Klein/   klein_cache.bat  klein_train.bat
@@ -14,6 +17,41 @@ train_scripts/
   musubi-tuner-ltx/  ltx_cache.bat  ltx_train.bat
   <arch>/_generated/            # auto-generated <name>_<arch>.toml files live here
 ```
+
+## Setup (run once per machine)
+
+The scripts don't hard-code where your repos and models live — they read those
+paths from `config.bat`. Create it once:
+
+```bat
+setup.bat
+```
+
+`setup.bat` asks for eight locations (press Enter to accept each default) and
+writes `config.bat`. Re-run it any time to change a path; your current values
+become the new defaults. Prefer editing by hand? Copy `config.example.bat` to
+`config.bat` and edit the paths. `config.bat` is git-ignored, so your local
+paths never get committed.
+
+The eight locations:
+
+| Variable | What it points at |
+|----------|-------------------|
+| `MUSUBI_DIR` | `musubi-tuner` repo (krea2 / klein / z-image / wan) |
+| `MUSUBI_LTX_DIR` | `musubi-tuner-ltx` repo (LTX-2.3) |
+| `COMFY_MODELS` | ComfyUI `models` root (diffusion_models / vae / text_encoders / clip) |
+| `FLUX2_DIR` | FLUX.2 folder (Klein dit + ae + text_encoder) |
+| `LTX_GEMMA_ROOT` | LTX-2.3 Gemma text-encoder folder |
+| `LTX_CHECKPOINT` | LTX-2.3 DiT checkpoint (full path — often a personal finetune) |
+| `TRAINING_ROOT` | output root; each arch adds its own `_loras` subfolder |
+| `HF_HOME` | HuggingFace cache (krea2) |
+
+Individual model **filenames** (`krea2-raw.safetensors`, `wan2.2_*`,
+`z_image_*`, …) are derived from these folders inside each script. If yours
+differ, either edit the script default or override per-run with the existing
+flags (`--vae`, `--dit`, `--checkpoint`, `--text-encoder`, `--gemma-root`, …).
+If you run a script before `config.bat` exists, it stops and tells you to run
+`setup.bat`.
 
 Sampling support by architecture: **krea2 / klein / z-image have the `--samples`
 toggle; LTX and WAN do not** (those models have no in-training sampling).

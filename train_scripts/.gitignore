@@ -1,2 +1,5 @@
 # Auto-generated per-subject dataset TOMLs (produced by the cache scripts)
 */_generated/
+
+# Machine-specific paths written by setup.bat (never commit local paths)
+config.bat

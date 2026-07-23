@@ -25,15 +25,19 @@ REM    --trigger <word>      stamp into output LoRA metadata after training
 REM                          (comma-separated for multiple, e.g. "c0urtney, corset")
 REM =====================================================================
 
+REM ---- load machine paths from config.bat (run setup.bat to create it) ----
+set "CONFIG=%~dp0..\config.bat"
+if not exist "%CONFIG%" ( echo ERROR: config not found: %CONFIG% & echo Run setup.bat in the train_scripts folder once to create it. & exit /b 1 )
+call "%CONFIG%"
+
 REM ---- fixed paths / defaults ----
-set "MUSUBI_DIR=D:\github\musubi-tuner"
 set "GEN_DIR=%~dp0_generated"
-set "DIT_RAW=D:\comfyui\ComfyUI\models\diffusion_models\krea2-raw.safetensors"
-set "VAE=D:\comfyui\ComfyUI\models\vae\qwen_image_vae.safetensors"
-set "TEXT_ENCODER=D:\comfyui\ComfyUI\models\text_encoders\Qwen3-VL-4B-Instruct\model-00001-of-00002.safetensors"
+set "DIT_RAW=%COMFY_MODELS%\diffusion_models\krea2-raw.safetensors"
+set "VAE=%COMFY_MODELS%\vae\qwen_image_vae.safetensors"
+set "TEXT_ENCODER=%COMFY_MODELS%\text_encoders\Qwen3-VL-4B-Instruct\model-00001-of-00002.safetensors"
 
 set "NAME="
-set "OUTPUT_ROOT=D:\DATA\training\krea2_loras"
+set "OUTPUT_ROOT=%TRAINING_ROOT%\krea2_loras"
 set "OUTPUT_NAME="
 set "EPOCHS=40"
 set "DIM=32"
@@ -124,7 +128,7 @@ if "%DRYRUN%"=="1" (
 
 cd /d "%MUSUBI_DIR%"
 set CUDA_VISIBLE_DEVICES=0
-set HF_HOME=D:\hf-cache
+REM HF_HOME comes from config.bat
 set PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True,max_split_size_mb:1024
 set TORCH_ALLOW_TF32_CUBLAS_OVERRIDE=1
 set CUDA_MODULE_LOADING=LAZY

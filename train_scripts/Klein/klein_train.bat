@@ -24,16 +24,20 @@ REM    --trigger <word>      stamp into output LoRA metadata after training
 REM                          (comma-separated for multiple, e.g. "c0urtney, corset")
 REM =====================================================================
 
+REM ---- load machine paths from config.bat (run setup.bat to create it) ----
+set "CONFIG=%~dp0..\config.bat"
+if not exist "%CONFIG%" ( echo ERROR: config not found: %CONFIG% & echo Run setup.bat in the train_scripts folder once to create it. & exit /b 1 )
+call "%CONFIG%"
+
 REM ---- fixed paths / defaults ----
-set "MUSUBI_DIR=D:\github\musubi-tuner"
 set "GEN_DIR=%~dp0_generated"
-set "DIT_CHECKPOINT=D:\ai\models\FLUX2\flux-2-klein-base-9b.safetensors"
-set "VAE_CHECKPOINT=D:\ai\models\FLUX2\ae.safetensors"
-set "TEXT_ENCODER=D:\ai\models\FLUX2\text_encoder\model-00001-of-00004.safetensors"
+set "DIT_CHECKPOINT=%FLUX2_DIR%\flux-2-klein-base-9b.safetensors"
+set "VAE_CHECKPOINT=%FLUX2_DIR%\ae.safetensors"
+set "TEXT_ENCODER=%FLUX2_DIR%\text_encoder\model-00001-of-00004.safetensors"
 set "MODEL_VERSION=klein-base-9b"
 
 set "NAME="
-set "OUTPUT_ROOT=D:\DATA\training\klein_loras"
+set "OUTPUT_ROOT=%TRAINING_ROOT%\klein_loras"
 set "OUTPUT_NAME="
 set "EPOCHS=16"
 set "DIM=32"

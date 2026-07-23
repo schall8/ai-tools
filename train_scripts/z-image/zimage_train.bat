@@ -30,15 +30,19 @@ REM    --trigger <word>      stamp into output LoRA metadata after training
 REM                          (comma-separated for multiple, e.g. "tammy, corset")
 REM =====================================================================
 
+REM ---- load machine paths from config.bat (run setup.bat to create it) ----
+set "CONFIG=%~dp0..\config.bat"
+if not exist "%CONFIG%" ( echo ERROR: config not found: %CONFIG% & echo Run setup.bat in the train_scripts folder once to create it. & exit /b 1 )
+call "%CONFIG%"
+
 REM ---- fixed paths / defaults ----
-set "MUSUBI_DIR=D:\github\musubi-tuner"
 set "GEN_DIR=%~dp0_generated"
-set "DIT=D:\comfyui\ComfyUI\models\diffusion_models\z_image_de_turbo_v1_bf16.safetensors"
-set "VAE=D:\comfyui\ComfyUI\models\vae\z_image_ae.safetensors"
-set "TE=D:\comfyui\ComfyUI\models\text_encoders\qwen_3_4b.safetensors"
+set "DIT=%COMFY_MODELS%\diffusion_models\z_image_de_turbo_v1_bf16.safetensors"
+set "VAE=%COMFY_MODELS%\vae\z_image_ae.safetensors"
+set "TE=%COMFY_MODELS%\text_encoders\qwen_3_4b.safetensors"
 
 set "NAME="
-set "OUTPUT_ROOT=D:\DATA\training\zimage_loras"
+set "OUTPUT_ROOT=%TRAINING_ROOT%\zimage_loras"
 set "OUTPUT_NAME="
 set "TARGET_EPOCHS=23"
 set "DIM=64"

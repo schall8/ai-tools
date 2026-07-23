@@ -21,14 +21,19 @@ REM    --meta-title / --meta-author / --meta-desc / --meta-tags
 REM    --trigger <word>      stamp into output LoRA metadata (comma-sep for many)
 REM =====================================================================
 
+REM ---- load machine paths from config.bat (run setup.bat to create it) ----
+set "CONFIG=%~dp0..\config.bat"
+if not exist "%CONFIG%" ( echo ERROR: config not found: %CONFIG% & echo Run setup.bat in the train_scripts folder once to create it. & exit /b 1 )
+call "%CONFIG%"
+
 REM ---- fixed paths / defaults ----
-set "MUSUBI_DIR=D:\github\musubi-tuner-ltx"
+set "MUSUBI_DIR=%MUSUBI_LTX_DIR%"
 set "GEN_DIR=%~dp0_generated"
-set "LTX_CHECKPOINT=D:\comfyui\ComfyUI\models\diffusion_models\LTX23\ltx2310eros_v1.safetensors"
-set "GEMMA_ROOT=D:\ai\models\LTX-2.3\gemma"
+REM LTX_CHECKPOINT comes from config.bat
+set "GEMMA_ROOT=%LTX_GEMMA_ROOT%"
 
 set "NAME="
-set "OUTPUT_ROOT=D:\DATA\training\ltx_loras"
+set "OUTPUT_ROOT=%TRAINING_ROOT%\ltx_loras"
 set "OUTPUT_NAME="
 set "EPOCHS=24"
 set "DIM=64"

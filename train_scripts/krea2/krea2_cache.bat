@@ -13,13 +13,17 @@ REM
 REM  Run this ONCE per subject before krea2_train.bat.
 REM =====================================================================
 
+REM ---- load machine paths from config.bat (run setup.bat to create it) ----
+set "CONFIG=%~dp0..\config.bat"
+if not exist "%CONFIG%" ( echo ERROR: config not found: %CONFIG% & echo Run setup.bat in the train_scripts folder once to create it. & exit /b 1 )
+call "%CONFIG%"
+
 REM ---- fixed paths / defaults (override with flags) ----
-set "MUSUBI_DIR=D:\github\musubi-tuner"
 set "RENDER=%~dp0..\render_toml.py"
 set "GEN_DIR=%~dp0_generated"
-set "CACHE_ROOT=D:/github/musubi-tuner/cache"
-set "VAE=D:\comfyui\ComfyUI\models\vae\qwen_image_vae.safetensors"
-set "TEXT_ENCODER=D:\comfyui\ComfyUI\models\text_encoders\Qwen3-VL-4B-Instruct\model-00001-of-00002.safetensors"
+set "CACHE_ROOT=%MUSUBI_DIR:\=/%/cache"
+set "VAE=%COMFY_MODELS%\vae\qwen_image_vae.safetensors"
+set "TEXT_ENCODER=%COMFY_MODELS%\text_encoders\Qwen3-VL-4B-Instruct\model-00001-of-00002.safetensors"
 
 set "NAME="
 set "DATASET="
@@ -65,7 +69,7 @@ if "%DRYRUN%"=="1" (
 
 cd /d "%MUSUBI_DIR%"
 set CUDA_VISIBLE_DEVICES=0
-set HF_HOME=D:\hf-cache
+REM HF_HOME comes from config.bat
 
 echo.
 echo Caching VAE latents...

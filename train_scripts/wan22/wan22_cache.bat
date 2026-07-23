@@ -20,13 +20,17 @@ REM
 REM  Run this ONCE per subject before wan22_train.bat.
 REM =====================================================================
 
+REM ---- load machine paths from config.bat (run setup.bat to create it) ----
+set "CONFIG=%~dp0..\config.bat"
+if not exist "%CONFIG%" ( echo ERROR: config not found: %CONFIG% & echo Run setup.bat in the train_scripts folder once to create it. & exit /b 1 )
+call "%CONFIG%"
+
 REM ---- fixed paths / defaults ----
-set "MUSUBI_DIR=D:\github\musubi-tuner"
 set "RENDER=%~dp0..\render_toml.py"
 set "GEN_DIR=%~dp0_generated"
-set "CACHE_ROOT=D:/github/musubi-tuner/cache"
-set "VAE=D:\comfyui\ComfyUI\models\vae\wan_2.1_vae.safetensors"
-set "T5=D:\comfyui\ComfyUI\models\clip\models_t5_umt5-xxl-enc-bf16.pth"
+set "CACHE_ROOT=%MUSUBI_DIR:\=/%/cache"
+set "VAE=%COMFY_MODELS%\vae\wan_2.1_vae.safetensors"
+set "T5=%COMFY_MODELS%\clip\models_t5_umt5-xxl-enc-bf16.pth"
 
 set "NAME="
 set "RES=480x640"
