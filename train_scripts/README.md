@@ -1,6 +1,6 @@
 # train_scripts — parameter-driven LoRA cache/train drivers
 
-Reusable cache + train scripts for three architectures. Instead of copying and
+Reusable cache + train scripts for five architectures. Instead of copying and
 hand-editing a `.toml` + `-cache.bat` + `-train.bat` per subject, you run one
 generic driver per architecture and pass everything as command-line flags.
 
@@ -73,6 +73,16 @@ Defaults match the tammy template: res `1024x1024`, dim/alpha `64/32`, lr `8e-5`
 target-epochs `23`. Trained on De-Turbo; run the LoRA on Z-Image Turbo at
 inference with `--guidance_scale 0`.
 
+Z-Image LoRAs need a one-time conversion before ComfyUI can load them (the
+train script prints the exact command on completion):
+
+```bat
+python src\musubi_tuner\convert_lora.py ^
+  --input  "D:\DATA\training\zimage_loras\tammy\tammy_zimage.safetensors" ^
+  --output "D:\DATA\training\zimage_loras\tammy\tammy_zimage_comfy.safetensors" ^
+  --target other
+```
+
 ## WAN 2.2 (T2V, dual high+low noise)
 
 Three optional dataset slots (video/image/extra), like LTX. No `--samples` flag.
@@ -108,14 +118,20 @@ musubi-tuner-ltx\ltx_train.bat --name tammy --epochs 24
 ```
 
 Defaults match the tammy_eros template: res `512,768`, dim/alpha `64`,
-blocks_to_swap `14`, epochs `24`, preset `t2v`.
+blocks_to_swap `14`, epochs `24`, preset `t2v`. LTX training **auto-resumes**
+(`--autoresume`): re-running with the same `--name`/output picks up from the
+latest saved state. Metadata flags (`--meta-title`, `--meta-author`,
+`--meta-desc`, `--meta-tags`) are LTX-only and default off the subject name.
 
-## Samples toggle (krea2 / klein only)
+## Samples toggle (krea2 / klein / z-image)
 
-- `--samples on` (default) — enables `--sample_prompts` + `--sample_every_n_epochs`
-  + `--sample_at_first`. Requires `--sample-prompts <file>`.
+- `--samples on` (default) — enables `--sample_prompts` + `--sample_every_n_epochs`.
+  krea2/klein also add `--sample_at_first`; z-image does not. Requires
+  `--sample-prompts <file>`.
 - `--samples off` — disables sampling entirely.
-- `--sample-every N` — epochs between samples (default 2).
+- `--sample-every N` — epochs between samples (default 2; z-image default 1).
+
+WAN and LTX have no in-training sampling, so neither exposes `--samples`.
 
 ## Trigger words (all architectures)
 
